@@ -12,6 +12,7 @@ def drawBoard(board):
     # This function prints out the board that it was passed.
 
     # "board" is a list of 9 strings representing the board
+    print('')
     print('   |   |')
     print(' ' + board[0] + ' | ' + board[1] + ' | ' + board[2])
     print('   |   |')
@@ -23,6 +24,7 @@ def drawBoard(board):
     print('   |   |')
     print(' ' + board[6] + ' | ' + board[7] + ' | ' + board[8])
     print('   |   |')
+    print('')
 
 # this function generates our starting point (in this case, just a blank board)
 def Generator():
@@ -37,17 +39,23 @@ class PerfSyst:
         self.weights = weights
             
     # function which plays a game (note that AI starts 1st and chooses 'X')
-    def play_game(self):
+    def play_game(self, Rand_or_Hum = True):
         board_trace = np.empty((12,self.board.size), dtype=np.str)
         board_trace[0,:] = self.board   # initial empty board
         i = 1
+        if Rand_or_Hum == True:
+            other_play = self.random_play
+        else:
+            other_play = self.human_play
         while True:
-            self.board = self.make_a_move('X', self.board, weights)    # AI move
+            self.board = self.make_a_move('X', self.board, self.weights)    # AI move
+            if Rand_or_Hum == False:    # if a human is playing
+                drawBoard(self.board)   # print the board to show them the move
             board_trace[i,:] = self.board
             i += 1
             if self.over_check():
                 break
-            self.board = self.random_play('O', self.board)    # random move
+            self.board = other_play('O', self.board)    # random move
             board_trace[i,:] = self.board
             if self.over_check():
                 break
@@ -91,9 +99,14 @@ class PerfSyst:
     # oppotunity to play a human
     def human_play(self, Sym, board):
         while True:
-        a = input('Type in your cell number (1-9): ')
-        a = a - 1
-        
+            a = input('Type in your cell number (1-9 phone layout): ')
+            a = int(a)
+            a = a - 1
+            if board[a] == ' ':
+                break
+        board[a] = Sym
+        drawBoard(board)
+        return(board)     
         
 # function which extracts the features of a board
 def extract_feat(board):
@@ -101,7 +114,7 @@ def extract_feat(board):
     x = np.zeros(7)
     x[0] = 1
     cols = np.transpose(board_array)
-    diag = np.row_stack((np.diag(board_array),np.diag(cols)))
+    diag = np.row_stack((np.diag(board_array),np.diag(np.fliplr(board_array))))
     final = np.row_stack((board_array,cols,diag))
     for i in range(0,8):
         blank = np.count_nonzero(final[i,:] == ' ')
@@ -266,16 +279,26 @@ def playOpponent(N, weights):
 
 def outcome(board_end):
     x = extract_feat(board_end)
-    if x[1] == 1:
+    if x[5] == 1:
         WLD = np.array([1,0,0])
-    elif x[2] == 1:
+    elif x[6] == 1:
         WLD = np.array([0,1,0])
     else:
         WLD = np.array([0,0,1])
     return(WLD)
 
 def playHooman(weights):
-    
+    board_init = Generator()
+    game = PerfSyst(board_init,weights)
+    trace = game.play_game(False)
+    last_b = trace[-1:,:]
+    WLD = outcome(last_b)
+    if WLD[0] == 1:
+        return('You lost!')
+    if WLD[1] == 1:
+        return('You won!')
+    if WLD[2] == 1:
+        return('You drew!')
         
 trains = [10000]
 weights = np.zeros(7)
@@ -286,5 +309,7 @@ for t in trains:
     WLD = playOpponent(100,weights)
     print('For '+ str(t) + ' training games, WLD is ' + str(WLD))
     #print('Weights are: ' + str(weights))
+
+print(playHooman(weights))
 
 #train(trains, weights)
