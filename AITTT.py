@@ -39,7 +39,7 @@ class PerfSyst:
         self.weights = weights
             
     # function which plays a game (note that AI starts 1st and chooses 'X')
-    def play_game(self, Rand_or_Hum = True):
+    def play_game(self, Rand_or_Hum = True, AI_Start = True):
         board_trace = np.empty((12,self.board.size), dtype=np.str)
         board_trace[0,:] = self.board   # initial empty board
         i = 1
@@ -47,23 +47,41 @@ class PerfSyst:
             other_play = self.random_play
         else:
             other_play = self.human_play
-        while True:
-            self.board = self.make_a_move('X', self.board, self.weights)    # AI move
-            if Rand_or_Hum == False:    # if a human is playing
-                drawBoard(self.board)   # print the board to show them the move
-            board_trace[i,:] = self.board
-            i += 1
-            if self.over_check():
-                break
-            self.board = other_play('O', self.board)    # random move
-            board_trace[i,:] = self.board
-            if self.over_check():
-                break
-            i += 1
-        #drawBoard(self.board)
+        if AI_Start == True:
+            while True:
+                board_trace, i = self.AI_Move(board_trace, i, Rand_or_Hum)
+                if self.over_check():
+                    break
+                board_trace, i = self.Other_Move(board_trace, i, other_play)
+                if self.over_check():
+                    break
+        else:
+            if Rand_or_Hum == False:
+                    drawBoard(self.board)
+            while True:
+                board_trace, i = self.Other_Move(board_trace, i, other_play)
+                if self.over_check():
+                    break
+                board_trace, i = self.AI_Move(board_trace, i, Rand_or_Hum)
+                if self.over_check():
+                    break
         board_trace = board_trace[~np.all(board_trace == '', axis = 1)]    # remove rows with all 0s
         return(board_trace)
     
+    def AI_Move(self, board_trace, i, Rand_or_Hum):
+        self.board = self.make_a_move('X', self.board, self.weights)    # AI move
+        if Rand_or_Hum == False:    # if a human is playing
+            drawBoard(self.board)   # print the board to show them the move
+        board_trace[i,:] = self.board
+        i += 1
+        return(board_trace, i)
+    
+    def Other_Move(self, board_trace, i, other_play):
+        self.board = other_play('O', self.board)    # random move
+        board_trace[i,:] = self.board
+        i += 1
+        return(board_trace, i)
+        
     # checks if the board is over
     def over_check(self):
         board_array = np.reshape(self.board,(3,3))  # create the array form
@@ -257,14 +275,14 @@ class Generalizer:
             
 
 # function which runs the entire learning ecosystem, returning the weights, having played N times
-def LearningEcoSyst(N, l_rate):
+def LearningEcoSyst(N, l_rate, AI_Start = True):
     
     weights = np.array([25.0]*7) # initial weights
         
     for i in range(0,N):
         board = Generator() # generate the board
         game = PerfSyst(board,weights)  # instantiate a new game with said board and current weights
-        trace = game.play_game()    # play a game and return the trace of that game
+        trace = game.play_game(True, AI_Start)    # play a game and return the trace of that game
         V_train,feat = Critic(trace, weights)    # create training data based on those games using the predifined algorithm
         G = Generalizer(l_rate)    # instantiate the generaliser/weight modifier with the learning rate
         weights = G.update_w(V_train, feat, weights)   # update the weights based on the training data
@@ -291,10 +309,10 @@ def outcome(board_end):
         WLD = np.array([0,0,1])
     return(WLD)
 
-def playHooman(weights):
+def playHooman(weights, AI_Start = True):
     board_init = Generator()
     game = PerfSyst(board_init,weights)
-    trace = game.play_game(False)
+    trace = game.play_game(False, AI_Start)
     last_b = trace[-1:,:]
     WLD = outcome(last_b)
     if WLD[0] == 1:
@@ -309,7 +327,7 @@ weights = np.zeros(7)
 weights_comp = []
 
 for t in trains:
-    weights = LearningEcoSyst(t,0.01)
+    weights = LearningEcoSyst(t,0.01, True)
     WLD = playOpponent(1000,weights)
     print('For '+ str(t) + ' training games, WLD is ' + str(WLD))
     #print('Weights are: ' + str(weights))
