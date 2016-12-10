@@ -162,9 +162,13 @@ def num_of(Sym, board):
 # function which determines if there are three in a row
 def in_a_row(Sym, board_array):
     inarow_cnt = 0
-    inarow_cnt += np.apply_along_axis(lambda x: (x == Sym).all(), 0, board_array).sum() # find the number of columns with 3 in a row
-    inarow_cnt += np.apply_along_axis(lambda x: (x == Sym).all(), 1, board_array).sum() # find the number of rows with 3 in a row
-    inarow_cnt += (np.diag(board_array) == Sym).all() + (np.diag(np.fliplr(board_array)) == Sym).all()    # check diagonals in a row
+    rows = board_array
+    cols = np.transpose(rows)
+    diag = np.row_stack((np.diag(board_array),np.diag(np.fliplr(board_array))))
+    final = np.row_stack((rows,cols,diag))
+    for i in range(0,8):
+        if (final[i,:] == Sym).sum() == 3:
+            inarow_cnt += 1
     if inarow_cnt == 0:
         return(0)
     else:
@@ -306,10 +310,10 @@ weights_comp = []
 
 for t in trains:
     weights = LearningEcoSyst(t,0.01)
-    WLD = playOpponent(100,weights)
+    WLD = playOpponent(1000,weights)
     print('For '+ str(t) + ' training games, WLD is ' + str(WLD))
     #print('Weights are: ' + str(weights))
 
-print(playHooman(weights))
+#print(playHooman(weights))
 
 #train(trains, weights)
