@@ -316,11 +316,11 @@ def playHooman(weights, AI_Start = True):
     last_b = trace[-1:,:]
     WLD = outcome(last_b)
     if WLD[0] == 1:
-        return('You lost!')
+        print('You lost!')
     if WLD[1] == 1:
-        return('You won!')
+        print('You won!')
     if WLD[2] == 1:
-        return('You drew!')
+        print('You drew!')
         
 trains = [10000]
 weights = np.zeros(7)
@@ -331,7 +331,18 @@ for t in trains:
     WLD = playOpponent(1000,weights)
     print('For '+ str(t) + ' training games, WLD is ' + str(WLD))
     #print('Weights are: ' + str(weights))
-
-#print(playHooman(weights))
-
+    
+# good performing weights I found were: [  84.91119168,    6.90896097,   -4.39604518,    4.21027477,    -2.00629494,    9.04990203, -112.27406073]
+    
+while True:
+    Who_start = input("AI Start? (Y/N)")
+    if (Who_start == 'Y') or (Who_start == 'y') or (Who_start == 'Yes'):
+        AI_Start = True
+    else:
+        AI_Start = False
+    playHooman(weights, AI_Start)        
+    Stop = input("Stop Playing? (Y/N)")
+    if (Stop == 'Y'):
+        break
+    
 #train(trains, weights)
