@@ -289,12 +289,12 @@ def LearningEcoSyst(N, l_rate, AI_Start = True):
     return(weights)
 
 # function which plays the opponent N times with input weights and counts of win lose draw
-def playOpponent(N, weights):
+def playOpponent(N, weights, AI_Start = True):
     WLD = np.zeros(3)
     for i in range(0,N):
         board_init = Generator()    # generate the blank board
         game = PerfSyst(board_init,weights)
-        trace = game.play_game()
+        trace = game.play_game(True, AI_Start)
         last_b = trace[-1:,:]
         WLD += outcome(last_b)
     return(WLD)
@@ -322,13 +322,13 @@ def playHooman(weights, AI_Start = True):
     if WLD[2] == 1:
         print('You drew!')
         
-trains = [10000]
+trains = [100000]
 weights = np.zeros(7)
 weights_comp = []
 
 for t in trains:
-    weights = LearningEcoSyst(t,0.01, True)
-    WLD = playOpponent(1000,weights)
+    weights = LearningEcoSyst(t,0.01, False)
+    WLD = playOpponent(1000,weights, False)
     print('For '+ str(t) + ' training games, WLD is ' + str(WLD))
     #print('Weights are: ' + str(weights))
     
